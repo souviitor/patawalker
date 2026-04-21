@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Usuários — PataWalker{% endblock %}
+{% block page_title %}Gerenciar Usuários{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Tutores cadastrados</h2>
+    <span class="badge badge-info">{{ users|length }} total</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Documento</th>
+          <th>Cidade</th>
+          <th>Pets</th>
+          <th>Pedidos</th>
+          <th>Cadastro</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="color:var(--text-muted); font-size:0.8rem;">{{ u.id }}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--primary-light)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; color:white; flex-shrink:0;">
+                {{ (u.full_name or u.email)[0].upper() }}
+              </div>
+              <span style="font-weight:500;">{{ u.full_name or '—' }}</span>
+            </div>
+          </td>
+          <td style="font-size:0.8rem; color:var(--text-muted);">{{ u.email }}</td>
+          <td style="font-size:0.8rem;">{{ u.document or '—' }}</td>
+          <td style="font-size:0.8rem;">{{ u.city or '—' }}</td>
+          <td style="text-align:center;">{{ u.pets|length }}</td>
+          <td style="text-align:center;">{{ u.services|length }}</td>
+          <td style="font-size:0.8rem; color:var(--text-muted);">{{ u.created_at.strftime('%d/%m/%y') }}</td>
+          <td>
+            <span class="badge badge-{% if u.is_active %}success{% else %}danger{% endif %}">
+              {{ 'Ativo' if u.is_active else 'Inativo' }}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" style="text-align:center; padding:32px; color:var(--text-muted);">
+            Nenhum usuário cadastrado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

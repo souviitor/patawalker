@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Admin — PataWalker{% endblock %}
+{% block page_title %}Dashboard Administrativo{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+    <div>
+      <div class="stat-value">{{ total_users }}</div>
+      <div class="stat-label">Tutores cadastrados</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="fa-solid fa-paw"></i></div>
+    <div>
+      <div class="stat-value">{{ total_orders }}</div>
+      <div class="stat-label">Pedidos totais</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-money-bill-wave"></i></div>
+    <div>
+      <div class="stat-value">R$ {{ '%.0f'|format(revenue|float) }}</div>
+      <div class="stat-label">Receita total</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon yellow"><i class="fa-solid fa-clock"></i></div>
+    <div>
+      <div class="stat-value">{{ pending }}</div>
+      <div class="stat-label">Pendentes</div>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Últimos Cadastros</h2>
+      <a href="{{ url_for('admin.users') }}" class="btn btn-outline btn-sm">Ver todos</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Email</th><th>Data</th></tr></thead>
+        <tbody>
+          {% for u in recent_users %}
+          <tr>
+            <td>{{ u.full_name or '—' }}</td>
+            <td style="color: var(--text-muted); font-size:0.8rem;">{{ u.email }}</td>
+            <td style="color: var(--text-muted); font-size:0.8rem;">{{ u.created_at.strftime('%d/%m/%y') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Últimos Pedidos</h2>
+      <a href="{{ url_for('admin.reports') }}" class="btn btn-outline btn-sm">Relatório</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tutor</th><th>Serviço</th><th>Valor</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for o in recent_orders %}
+          <tr>
+            <td>{{ o.tutor.full_name.split()[0] if o.tutor and o.tutor.full_name else '—' }}</td>
+            <td>{{ o.service_type }}</td>
+            <td>R$ {{ '%.2f'|format(o.amount|float) if o.amount else '0' }}</td>
+            <td>
+              <span class="badge badge-{% if o.status.name == 'CONFIRMED' %}success{% elif o.status.name == 'PENDING' %}warning{% else %}info{% endif %}">
+                {{ o.status.value if o.status else '—' }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-top: 20px;">
+  <a href="{{ url_for('admin.reports') }}" class="card" style="text-decoration:none; text-align:center;">
+    <i class="fa-solid fa-chart-bar" style="font-size:1.5rem; color:var(--primary); margin-bottom:8px; display:block;"></i>
+    <div style="font-weight:600; font-size:0.875rem;">Relatórios</div>
+  </a>
+  <a href="{{ url_for('admin.service_rates') }}" class="card" style="text-decoration:none; text-align:center;">
+    <i class="fa-solid fa-tags" style="font-size:1.5rem; color:var(--info); margin-bottom:8px; display:block;"></i>
+    <div style="font-weight:600; font-size:0.875rem;">Taxas & Planos</div>
+  </a>
+  <a href="{{ url_for('admin.financial') }}" class="card" style="text-decoration:none; text-align:center;">
+    <i class="fa-solid fa-dollar-sign" style="font-size:1.5rem; color:var(--success); margin-bottom:8px; display:block;"></i>
+    <div style="font-weight:600; font-size:0.875rem;">Financeiro</div>
+  </a>
+  <a href="{{ url_for('admin.export_excel') }}" class="card" style="text-decoration:none; text-align:center;">
+    <i class="fa-solid fa-file-excel" style="font-size:1.5rem; color:#22A45D; margin-bottom:8px; display:block;"></i>
+    <div style="font-weight:600; font-size:0.875rem;">Exportar Excel</div>
+  </a>
+</div>
+{% endblock %}

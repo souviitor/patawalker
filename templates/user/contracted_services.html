@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Serviços Ativos — PataWalker{% endblock %}
+{% block page_title %}Serviços Contratados{% endblock %}
+
+{% block content %}
+{% if orders %}
+<div style="display:flex; flex-direction:column; gap:16px;">
+  {% for o in orders %}
+  <div class="card">
+    <div style="display:flex; align-items:flex-start; gap:16px;">
+      <div style="width:52px; height:52px; background:linear-gradient(135deg,var(--primary),var(--primary-light)); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">
+        {% if o.service_type == 'plan' %}🏅{% elif o.service_type == 'avulso' %}🦮{% elif o.service_type == 'vet' %}🏥{% else %}🛒{% endif %}
+      </div>
+      <div style="flex:1;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <div style="font-family:var(--font-display); font-weight:700; font-size:1.05rem;">
+            {% if o.service_type == 'plan' %}{{ o.plan.name if o.plan else 'Plano' }}
+            {% elif o.service_type == 'avulso' %}Passeio Avulso{% if o.walk_duration %} — {{ o.walk_duration.name }}{% endif %}
+            {% elif o.service_type == 'vet' %}Acompanhamento ao Veterinário
+            {% else %}Compras para o pet{% endif %}
+          </div>
+          <span class="badge badge-{% if o.status and o.status.name == 'CONFIRMED' %}success{% elif o.status and o.status.name == 'PENDING' %}warning{% else %}info{% endif %}">
+            {{ o.status.value if o.status else '—' }}
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; margin-bottom:12px;">
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            <i class="fa-solid fa-paw"></i> Pet: <strong style="color:var(--text);">{{ o.pet.name if o.pet else '—' }}</strong>
+          </div>
+          {% if o.scheduled_date %}
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            <i class="fa-solid fa-calendar"></i> Data: <strong style="color:var(--text);">{{ o.scheduled_date.strftime('%d/%m/%Y') }}</strong>
+          </div>
+          {% elif o.scheduled_days %}
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            <i class="fa-solid fa-calendar-week"></i> Dias: <strong style="color:var(--text);">{{ o.scheduled_days.days|join(', ') if o.scheduled_days.days is defined else '—' }}</strong>
+          </div>
+          {% endif %}
+          {% if o.scheduled_time %}
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            <i class="fa-solid fa-clock"></i> Hora: <strong style="color:var(--text);">{{ o.scheduled_time.strftime('%H:%M') }}</strong>
+          </div>
+          {% endif %}
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            <i class="fa-solid fa-dollar-sign"></i> Valor: <strong style="color:var(--primary);">R$ {{ '%.2f'|format(o.amount|float) if o.amount else '—' }}</strong>
+          </div>
+        </div>
+
+        {% if o.scheduled_date %}
+        {% set from_now = (o.scheduled_date - now.date()).days %}
+        {% if from_now >= 1 %}
+        <div style="font-size:0.78rem; color:var(--success);">
+          <i class="fa-solid fa-shield-halved"></i> Cancelamento com reembolso disponível ({{ from_now }} dias restantes)
+        </div>
+        {% elif from_now == 0 %}
+        <div style="font-size:0.78rem; color:var(--warning);">
+          <i class="fa-solid fa-triangle-exclamation"></i> Passeio hoje! Cancelamento sem reembolso.
+        </div>
+        {% endif %}
+        {% endif %}
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
+        {% if o.status and o.status.name in ['PENDING', 'CONFIRMED'] %}
+        <form method="POST" action="{{ url_for('user.cancel_service', order_id=o.id) }}" onsubmit="return confirm('Tem certeza que deseja cancelar?')">
+          <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--danger);">
+            <i class="fa-solid fa-xmark"></i> Cancelar
+          </button>
+        </form>
+        {% endif %}
+        {% if o.payment_status and o.payment_status.name == 'PENDING' %}
+        <a href="{{ url_for('services.confirm_order', order_id=o.id) }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-lock"></i> Pagar
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center; padding:60px;">
+  <div style="font-size:3.5rem; margin-bottom:16px;">📋</div>
+  <div style="font-family:var(--font-display); font-weight:700; margin-bottom:8px;">Nenhum serviço ativo</div>
+  <div style="color:var(--text-muted); margin-bottom:24px;">Contrate um plano ou agende um passeio avulso para seu pet!</div>
+  <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+    <a href="{{ url_for('services.plans') }}" class="btn btn-primary">Ver Planos</a>
+    <a href="{{ url_for('services.avulso') }}" class="btn btn-outline">Passeio Avulso</a>
+  </div>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+const now = new Date();
+</script>
+{% endblock %}
+{% endblock %}

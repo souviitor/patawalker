@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — PataWalker{% endblock %}
+{% block page_title %}Olá, {{ current_user.full_name.split()[0] if current_user.full_name else 'Tutor' }}! 👋{% endblock %}
+
+{% block content %}
+<!-- Carousel -->
+<div class="carousel-wrap">
+  <div class="carousel-track" id="carouselTrack">
+    <div class="carousel-slide">
+      <h2>🐾 Bem-vindo ao PataWalker!</h2>
+      <p>Seu dog walker de confiança. Passeios com amor, segurança e rastreamento em tempo real para seu melhor amigo.</p>
+    </div>
+    <div class="carousel-slide" style="background: linear-gradient(135deg, #1A1A2E, #3B82F6)">
+      <h2>📅 Agende com facilidade</h2>
+      <p>Escolha o dia, horário e duração do passeio. Planos semanais ou passeios avulsos — você decide!</p>
+    </div>
+    <div class="carousel-slide" style="background: linear-gradient(135deg, #C94F0A, #F5C842)">
+      <h2>💳 Pagamento Seguro</h2>
+      <p>Integração com Mercado Pago. Cancele até 24h antes e receba seu reembolso automático.</p>
+    </div>
+    <div class="carousel-slide" style="background: linear-gradient(135deg, #16A34A, #22C55E)">
+      <h2>🏥 Mais serviços disponíveis</h2>
+      <p>Acompanhamento ao veterinário, compras de ração e medicamentos — tudo pelo app!</p>
+    </div>
+  </div>
+  <div class="carousel-dots" id="carouselDots"></div>
+</div>
+
+{% if not current_user.profile_complete %}
+<div style="background: linear-gradient(135deg, rgba(232,99,26,0.08), rgba(255,140,66,0.06)); border: 1px solid rgba(232,99,26,0.2); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+  <div style="font-size: 2rem;">⚠️</div>
+  <div style="flex: 1;">
+    <div style="font-weight: 600; margin-bottom: 4px;">Complete seu cadastro</div>
+    <div style="font-size: 0.875rem; color: var(--text-muted);">Adicione informações do seu pet para aproveitar todos os serviços.</div>
+  </div>
+  <a href="{{ url_for('user.complete_profile') }}" class="btn btn-primary btn-sm">Completar agora</a>
+</div>
+{% endif %}
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="fa-solid fa-paw"></i></div>
+    <div>
+      <div class="stat-value">{{ current_user.pets|length }}</div>
+      <div class="stat-label">Pet(s) cadastrado(s)</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+    <div>
+      <div class="stat-value">{{ recent_orders|selectattr('status.name', 'in', ['CONFIRMED','IN_PROGRESS'])|list|length }}</div>
+      <div class="stat-label">Passeios agendados</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+    <div>
+      <div class="stat-value">{{ recent_orders|selectattr('status.name', 'equalto', 'COMPLETED')|list|length }}</div>
+      <div class="stat-label">Passeios concluídos</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon yellow"><i class="fa-solid fa-heart"></i></div>
+    <div>
+      <div class="stat-value">{{ '❤️' }}</div>
+      <div class="stat-label">Felicidade do pet</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick actions -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px;">
+  <a href="{{ url_for('services.plans') }}" class="card" style="text-decoration:none; text-align:center; cursor:pointer; transition: all 0.2s;">
+    <div style="font-size: 2.5rem; margin-bottom: 12px;">🏅</div>
+    <div style="font-family: var(--font-display); font-weight: 700; margin-bottom: 4px;">Planos de Passeio</div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">Planos P, M e G semanais</div>
+  </a>
+  <a href="{{ url_for('services.avulso') }}" class="card" style="text-decoration:none; text-align:center; cursor:pointer;">
+    <div style="font-size: 2.5rem; margin-bottom: 12px;">📅</div>
+    <div style="font-family: var(--font-display); font-weight: 700; margin-bottom: 4px;">Passeio Avulso</div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">Agende quando quiser</div>
+  </a>
+  <a href="{{ url_for('services.vet') }}" class="card" style="text-decoration:none; text-align:center; cursor:pointer;">
+    <div style="font-size: 2.5rem; margin-bottom: 12px;">🏥</div>
+    <div style="font-family: var(--font-display); font-weight: 700; margin-bottom: 4px;">Acompanhar ao Vet</div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">Consultas e exames</div>
+  </a>
+  <a href="{{ url_for('services.shopping') }}" class="card" style="text-decoration:none; text-align:center; cursor:pointer;">
+    <div style="font-size: 2.5rem; margin-bottom: 12px;">🛒</div>
+    <div style="font-family: var(--font-display); font-weight: 700; margin-bottom: 4px;">Compras para o Pet</div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">Ração, brinquedos e mais</div>
+  </a>
+</div>
+
+<!-- Recent orders -->
+{% if recent_orders %}
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Atividade Recente</h2>
+    <a href="{{ url_for('user.walk_history') }}" class="btn btn-outline btn-sm">Ver tudo</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Serviço</th>
+          <th>Pet</th>
+          <th>Data</th>
+          <th>Valor</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in recent_orders %}
+        <tr>
+          <td>{{ order.service_type|capitalize }}</td>
+          <td>{{ order.pet.name if order.pet else '—' }}</td>
+          <td>{{ order.scheduled_date.strftime('%d/%m/%Y') if order.scheduled_date else '—' }}</td>
+          <td>R$ {{ '%.2f'|format(order.amount|float) if order.amount else '—' }}</td>
+          <td>
+            <span class="badge badge-{% if order.status.name == 'CONFIRMED' %}success{% elif order.status.name == 'PENDING' %}warning{% elif order.status.name == 'CANCELLED' %}danger{% else %}info{% endif %}">
+              {{ order.status.value }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 48px;">
+  <div style="font-size: 4rem; margin-bottom: 16px;">🐕</div>
+  <div style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">Nenhum passeio ainda</div>
+  <div style="color: var(--text-muted); margin-bottom: 24px;">Agende o primeiro passeio do seu pet agora mesmo!</div>
+  <a href="{{ url_for('services.avulso') }}" class="btn btn-primary">Agendar passeio</a>
+</div>
+{% endif %}
+
+<script>
+// Carousel
+const track = document.getElementById('carouselTrack');
+const dotsContainer = document.getElementById('carouselDots');
+const slides = track.children;
+let current = 0;
+
+// Create dots
+Array.from(slides).forEach((_, i) => {
+  const dot = document.createElement('button');
+  dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+  dot.style.cssText = 'border:none; cursor:pointer; background: ' + (i === 0 ? 'var(--primary)' : 'var(--border-dark)') + ';';
+  dot.onclick = () => goTo(i);
+  dotsContainer.appendChild(dot);
+});
+
+function goTo(n) {
+  current = n;
+  track.style.transform = `translateX(-${n * 100}%)`;
+  document.querySelectorAll('.carousel-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === n);
+  });
+}
+
+// Auto advance
+setInterval(() => goTo((current + 1) % slides.length), 5000);
+</script>
+{% endblock %}

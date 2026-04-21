@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}Meu Pet — PataWalker{% endblock %}
+{% block page_title %}Meu Pet{% endblock %}
+
+{% block content %}
+{% if pet %}
+<div style="display:grid; grid-template-columns: 320px 1fr; gap:24px; align-items:start;">
+  <!-- Pet profile card -->
+  <div>
+    <div class="card" style="text-align:center; padding:32px;">
+      <div style="width:100px; height:100px; border-radius:50%; margin:0 auto 16px; border:4px solid var(--primary); overflow:hidden; background:linear-gradient(135deg,var(--primary),var(--primary-light)); display:flex; align-items:center; justify-content:center; font-size:3rem;">
+        {% if pet.photo %}
+          <img src="/static/{{ pet.photo }}" alt="{{ pet.name }}" style="width:100%; height:100%; object-fit:cover;">
+        {% else %}
+          🐶
+        {% endif %}
+      </div>
+      <h2 style="font-family:var(--font-display); font-size:1.6rem; font-weight:800; margin-bottom:4px;">{{ pet.name }}</h2>
+      <div style="color:var(--text-muted); font-size:0.875rem; margin-bottom:16px;">{{ pet.breed or 'Raça não informada' }}</div>
+
+      {% if pet.size %}
+      <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(232,99,26,0.1); color:var(--primary); padding:6px 16px; border-radius:20px; font-size:0.8rem; font-weight:600; margin-bottom:16px;">
+        {{ pet.size.value }}
+      </div>
+      {% endif %}
+
+      <div style="border-top:1px solid var(--border); padding-top:16px; display:flex; flex-direction:column; gap:10px; text-align:left;">
+        {% if pet.temperament_humans %}
+        <div style="display:flex; justify-content:space-between; font-size:0.875rem;">
+          <span style="color:var(--text-muted);">Com humanos</span>
+          <span style="font-weight:500;">{{ pet.temperament_humans }}</span>
+        </div>
+        {% endif %}
+        {% if pet.temperament_animals %}
+        <div style="display:flex; justify-content:space-between; font-size:0.875rem;">
+          <span style="color:var(--text-muted);">Com animais</span>
+          <span style="font-weight:500;">{{ pet.temperament_animals }}</span>
+        </div>
+        {% endif %}
+        {% if pet.vaccine_card %}
+        <div style="display:flex; justify-content:space-between; font-size:0.875rem;">
+          <span style="color:var(--text-muted);">Vacinas</span>
+          <a href="/static/{{ pet.vaccine_card }}" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:500;"><i class="fa-solid fa-file-medical"></i> Ver carteirinha</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <a href="{{ url_for('user.complete_profile') }}" class="btn btn-outline btn-sm" style="width:100%; justify-content:center; margin-top:16px;">
+        <i class="fa-solid fa-pen"></i> Editar informações
+      </a>
+    </div>
+
+    <!-- Tutor card -->
+    <div class="card" style="margin-top:16px;">
+      <div style="font-family:var(--font-display); font-weight:700; margin-bottom:14px; font-size:0.95rem;">
+        <i class="fa-solid fa-user" style="color:var(--primary);"></i> Tutor
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:0.875rem;">
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Nome</span>
+          <span style="font-weight:500;">{{ current_user.full_name or '—' }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Email</span>
+          <span style="font-size:0.8rem;">{{ current_user.email }}</span>
+        </div>
+        {% if current_user.phone %}
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Telefone</span>
+          <span>{{ current_user.phone }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders history -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Histórico de Passeios e Serviços</h2>
+        <a href="{{ url_for('services.avulso') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-plus"></i> Novo passeio
+        </a>
+      </div>
+
+      {% if orders %}
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        {% for o in orders %}
+        <div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; display:flex; align-items:center; gap:14px; transition:all 0.2s;">
+          <div style="width:44px; height:44px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+            background:{% if o.status and o.status.name == 'COMPLETED' %}rgba(34,197,94,0.12){% elif o.status and o.status.name == 'CONFIRMED' %}rgba(59,130,246,0.12){% elif o.status and o.status.name == 'CANCELLED' %}rgba(239,68,68,0.12){% else %}rgba(232,99,26,0.1){% endif %};">
+            {% if o.service_type == 'plan' %}🏅
+            {% elif o.service_type == 'avulso' %}🦮
+            {% elif o.service_type == 'vet' %}🏥
+            {% else %}🛒{% endif %}
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight:600; margin-bottom:2px;">
+              {% if o.service_type == 'plan' %}{{ o.plan.name if o.plan else 'Plano' }}
+              {% elif o.service_type == 'avulso' %}Passeio Avulso{% if o.walk_duration %} — {{ o.walk_duration.name }}{% endif %}
+              {% elif o.service_type == 'vet' %}Acompanhamento ao Veterinário
+              {% else %}Compras para o pet{% endif %}
+            </div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">
+              {% if o.scheduled_date %}{{ o.scheduled_date.strftime('%d/%m/%Y') }}{% if o.scheduled_time %} às {{ o.scheduled_time.strftime('%H:%M') }}{% endif %}
+              {% elif o.scheduled_days %}{{ o.scheduled_days.days|join(', ') if o.scheduled_days.days is defined else '—' }} — {{ o.scheduled_days.time if o.scheduled_days.time is defined else '' }}
+              {% else %}Data não definida{% endif %}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">R$ {{ '%.2f'|format(o.amount|float) if o.amount else '—' }}</div>
+            <span class="badge badge-{% if o.status and o.status.name == 'CONFIRMED' %}success{% elif o.status and o.status.name == 'PENDING' %}warning{% elif o.status and o.status.name == 'CANCELLED' %}danger{% elif o.status and o.status.name == 'COMPLETED' %}info{% else %}gray{% endif %}">
+              {{ o.status.value if o.status else '—' }}
+            </span>
+          </div>
+          {% if o.status and o.status.name in ['PENDING', 'CONFIRMED'] %}
+          <form method="POST" action="{{ url_for('user.cancel_service', order_id=o.id) }}" onsubmit="return confirm('Tem certeza que deseja cancelar este serviço?')">
+            <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--danger);">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align:center; padding:40px;">
+        <div style="font-size:3.5rem; margin-bottom:16px;">🦮</div>
+        <div style="font-family:var(--font-display); font-weight:700; margin-bottom:8px;">Nenhum passeio ainda</div>
+        <div style="color:var(--text-muted); margin-bottom:24px;">{{ pet.name }} está esperando pela primeira aventura!</div>
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+          <a href="{{ url_for('services.plans') }}" class="btn btn-primary">Ver Planos</a>
+          <a href="{{ url_for('services.avulso') }}" class="btn btn-outline">Passeio Avulso</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="card" style="text-align:center; padding:60px; max-width:500px; margin:0 auto;">
+  <div style="font-size:4rem; margin-bottom:20px;">🐕</div>
+  <h2 style="font-family:var(--font-display); font-weight:800; margin-bottom:10px;">Adicione seu pet!</h2>
+  <p style="color:var(--text-muted); margin-bottom:28px;">Complete seu cadastro para adicionar as informações do seu melhor amigo.</p>
+  <a href="{{ url_for('user.complete_profile') }}" class="btn btn-primary btn-lg">Completar cadastro</a>
+</div>
+{% endif %}
+{% endblock %}

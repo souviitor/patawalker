@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Trocar Plano — PataWalker{% endblock %}
+{% block page_title %}Trocar de Plano{% endblock %}
+{% block content %}
+<div style="max-width:700px; margin:0 auto;">
+  <div class="card" style="margin-bottom:24px; background:linear-gradient(135deg,rgba(232,99,26,0.08),transparent); border-color:rgba(232,99,26,0.2);">
+    <div style="font-family:var(--font-display); font-weight:700; margin-bottom:6px;">Alterar seu plano de passeio</div>
+    <div style="color:var(--text-muted); font-size:0.875rem;">Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. A mudança entra em vigor no próximo ciclo de cobrança.</div>
+  </div>
+  {% if plans %}
+  <div class="plans-grid">
+    {% for plan in plans %}
+    <div class="plan-card {% if plan.plan_type.name == 'M' %}featured{% endif %}">
+      <div class="plan-size">{{ plan.plan_type.name }}</div>
+      <div class="plan-name">{{ plan.name }}</div>
+      <div class="plan-desc">{{ plan.walks_per_week }}x/semana · {{ plan.duration_minutes }} min</div>
+      <div class="plan-price">R$ {{ '%.2f'|format(plan.price|float) }}<span>/mês</span></div>
+      <div style="margin-top:16px;">
+        <a href="{{ url_for('services.plan_detail', plan_id=plan.id) }}" class="btn btn-primary" style="width:100%; justify-content:center;">Selecionar Plano {{ plan.plan_type.name }}</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card" style="text-align:center; padding:40px; color:var(--text-muted);">Nenhum plano disponível no momento.</div>
+  {% endif %}
+</div>
+{% endblock %}

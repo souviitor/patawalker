@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}Completar Cadastro — PataWalker{% endblock %}
+{% block page_title %}Completar Cadastro{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto;">
+  <div class="card" style="background:linear-gradient(135deg,rgba(232,99,26,0.08),rgba(255,140,66,0.04)); border-color:rgba(232,99,26,0.2); margin-bottom:24px; display:flex; align-items:center; gap:16px;">
+    <div style="font-size:2.5rem; flex-shrink:0;">🎉</div>
+    <div>
+      <div style="font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin-bottom:4px;">Cadastro realizado com sucesso!</div>
+      <div style="color:var(--text-muted); font-size:0.875rem;">Preencha as informações adicionais do seu pet para aproveitar todos os serviços. Pode pular e completar depois!</div>
+    </div>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data">
+    <!-- Pet additional info -->
+    {% if pet %}
+    <div class="card" style="margin-bottom:20px;">
+      <div style="font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <i class="fa-solid fa-paw" style="color:var(--primary);"></i> Informações adicionais de {{ pet.name }}
+      </div>
+
+      <div class="form-group">
+        <label>Porte do pet</label>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+          {% for val, label, icon in [('SMALL','Pequeno','🐩'),('MEDIUM','Médio','🐕'),('LARGE','Grande','🐕‍🦺')] %}
+          <label style="cursor:pointer;">
+            <input type="radio" name="pet_size" value="{{ val }}" {% if pet.size and pet.size.name == val %}checked{% endif %} style="display:none;" onchange="selectSize(this, '{{ val }}')">
+            <div class="size-opt" id="size-{{ val }}" style="border:2px solid {% if pet.size and pet.size.name == val %}var(--primary){% else %}var(--border){% endif %}; background:{% if pet.size and pet.size.name == val %}rgba(232,99,26,0.08){% else %}transparent{% endif %}; border-radius:var(--radius-sm); padding:16px; text-align:center; transition:all 0.2s; cursor:pointer;">
+              <div style="font-size:1.8rem; margin-bottom:6px;">{{ icon }}</div>
+              <div style="font-weight:600; font-size:0.875rem;">{{ label }}</div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Temperamento com humanos</label>
+          <select name="temperament_humans">
+            <option value="">Selecione...</option>
+            {% for opt in ['Muito sociável', 'Sociável', 'Neutro', 'Tímido', 'Agressivo'] %}
+            <option value="{{ opt }}" {% if pet.temperament_humans == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Temperamento com outros animais</label>
+          <select name="temperament_animals">
+            <option value="">Selecione...</option>
+            {% for opt in ['Muito sociável', 'Sociável', 'Neutro', 'Agitado', 'Agressivo'] %}
+            <option value="{{ opt }}" {% if pet.temperament_animals == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Carteira de vacinação</label>
+        <div style="border:2px dashed var(--border); border-radius:var(--radius-sm); padding:20px; display:flex; align-items:center; gap:14px; cursor:pointer;" onclick="document.getElementById('vaccineFile').click()">
+          <i class="fa-solid fa-file-medical" style="font-size:1.5rem; color:var(--text-muted);"></i>
+          <div>
+            <div style="font-weight:500; font-size:0.875rem;" id="vaccineLabel">
+              {% if pet.vaccine_card %}✅ Carteirinha já enviada — clique para atualizar{% else %}Enviar carteirinha de vacinação (PDF ou imagem){% endif %}
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">JPG, PNG ou PDF até 16MB</div>
+          </div>
+          <input type="file" id="vaccineFile" name="vaccine_card" accept="image/*,.pdf" style="display:none;" onchange="document.getElementById('vaccineLabel').textContent = '✅ ' + this.files[0].name">
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Account additional info -->
+    <div class="card" style="margin-bottom:20px;">
+      <div style="font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <i class="fa-solid fa-user" style="color:var(--primary);"></i> Dados complementares da conta
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Telefone / WhatsApp</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-phone"></i>
+            <input type="tel" name="phone" placeholder="(11) 99999-9999" value="{{ current_user.phone or '' }}" id="phone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>CEP</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-map-pin"></i>
+            <input type="text" name="zip_code" placeholder="00000-000" value="{{ current_user.zip_code or '' }}" id="cep" maxlength="9">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cidade</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-city"></i>
+            <input type="text" name="city" placeholder="Sua cidade" value="{{ current_user.city or '' }}" id="city">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select name="state">
+            <option value="">Selecione...</option>
+            {% for uf in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] %}
+            <option value="{{ uf }}" {% if current_user.state == uf %}selected{% endif %}>{{ uf }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Complemento do endereço</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-building"></i>
+          <input type="text" name="address_complement" placeholder="Apto, bloco, referência..." value="{{ current_user.address_complement or '' }}">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <button type="submit" class="btn btn-primary btn-lg" style="flex:1; justify-content:center;">
+        <i class="fa-solid fa-check"></i> Salvar e continuar
+      </button>
+      <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline btn-lg" style="justify-content:center;">
+        Pular por agora
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+function selectSize(input, val) {
+  document.querySelectorAll('[id^="size-"]').forEach(el => {
+    el.style.borderColor = 'var(--border)';
+    el.style.background = 'transparent';
+  });
+  const el = document.getElementById('size-' + val);
+  if (el) {
+    el.style.borderColor = 'var(--primary)';
+    el.style.background = 'rgba(232,99,26,0.08)';
+  }
+}
+
+// Phone mask
+document.getElementById('phone').addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\D/g, '');
+  v = v.replace(/^(\d{2})(\d)/, '($1) $2');
+  v = v.replace(/(\d{5})(\d)/, '$1-$2');
+  e.target.value = v.substring(0, 15);
+});
+
+// CEP auto-fill
+document.getElementById('cep').addEventListener('blur', async function() {
+  const cep = this.value.replace(/\D/g, '');
+  if (cep.length === 8) {
+    try {
+      const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const d = await r.json();
+      if (!d.erro) {
+        document.getElementById('city').value = d.localidade || '';
+        document.querySelector('select[name="state"]').value = d.uf || '';
+      }
+    } catch(e) {}
+  }
+});
+
+// CEP mask
+document.getElementById('cep').addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\D/g, '');
+  v = v.replace(/(\d{5})(\d)/, '$1-$2');
+  e.target.value = v.substring(0, 9);
+});
+</script>
+{% endblock %}

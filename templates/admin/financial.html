@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Financeiro — PataWalker{% endblock %}
+{% block page_title %}Controle Financeiro{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-arrow-trend-up"></i></div>
+    <div>
+      <div class="stat-value" style="color:var(--success);">R$ {{ '%.2f'|format(total_income|float) }}</div>
+      <div class="stat-label">Total de entradas</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(239,68,68,0.1);color:var(--danger);"><i class="fa-solid fa-arrow-trend-down"></i></div>
+    <div>
+      <div class="stat-value" style="color:var(--danger);">R$ {{ '%.2f'|format(total_expense|float) }}</div>
+      <div class="stat-label">Total de saídas</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon yellow"><i class="fa-solid fa-rotate-left"></i></div>
+    <div>
+      <div class="stat-value" style="color:var(--warning);">R$ {{ '%.2f'|format(total_refund|float) }}</div>
+      <div class="stat-label">Reembolsos</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-wallet"></i></div>
+    <div>
+      <div class="stat-value">R$ {{ '%.2f'|format((total_income|float) - (total_expense|float) - (total_refund|float)) }}</div>
+      <div class="stat-label">Saldo líquido</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Lançamentos Financeiros</h2>
+    <a href="{{ url_for('admin.export_excel') }}" class="btn btn-success btn-sm">
+      <i class="fa-solid fa-file-excel"></i> Exportar
+    </a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Pedido</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td style="font-size:0.8rem; color:var(--text-muted);">{{ r.date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ r.description or '—' }}</td>
+          <td>
+            <span class="badge badge-{% if r.type == 'income' %}success{% elif r.type == 'expense' %}danger{% else %}warning{% endif %}">
+              {{ {'income':'Entrada','expense':'Saída','refund':'Reembolso'}.get(r.type, r.type) }}
+            </span>
+          </td>
+          <td style="font-weight:600; color:{% if r.type == 'income' %}var(--success){% elif r.type == 'expense' %}var(--danger){% else %}var(--warning){% endif %};">
+            {% if r.type != 'income' %}−{% endif %}R$ {{ '%.2f'|format(r.amount|float) }}
+          </td>
+          <td style="font-size:0.8rem; color:var(--text-muted);">#{{ r.order_id or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted);">
+            <i class="fa-solid fa-receipt" style="font-size:2rem; display:block; margin-bottom:12px; opacity:0.3;"></i>
+            Nenhum lançamento registrado ainda.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Relatórios — PataWalker{% endblock %}
+{% block page_title %}Relatórios{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h2 class="card-title"><i class="fa-solid fa-filter" style="color:var(--primary);"></i> Filtrar por período</h2>
+    <a href="{{ url_for('admin.export_excel') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}" class="btn btn-success btn-sm">
+      <i class="fa-solid fa-file-excel"></i> Exportar Excel
+    </a>
+  </div>
+  <form method="GET" style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
+    <div class="form-group" style="margin:0; flex:1; min-width:160px;">
+      <label>Data inicial</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-calendar"></i>
+        <input type="date" name="start_date" value="{{ start_date or '' }}">
+      </div>
+    </div>
+    <div class="form-group" style="margin:0; flex:1; min-width:160px;">
+      <label>Data final</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-calendar"></i>
+        <input type="date" name="end_date" value="{{ end_date or '' }}">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">
+      <i class="fa-solid fa-search"></i> Filtrar
+    </button>
+    <a href="{{ url_for('admin.reports') }}" class="btn btn-outline">Limpar</a>
+  </form>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom: 24px;">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-user-plus"></i></div>
+    <div>
+      <div class="stat-value">{{ users|length }}</div>
+      <div class="stat-label">Cadastros no período</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="fa-solid fa-list-check"></i></div>
+    <div>
+      <div class="stat-value">{{ orders|length }}</div>
+      <div class="stat-label">Pedidos no período</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-dollar-sign"></i></div>
+    <div>
+      <div class="stat-value">R$ {{ '%.0f'|format(revenue|float) }}</div>
+      <div class="stat-label">Receita aprovada</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon yellow"><i class="fa-solid fa-chart-line"></i></div>
+    <div>
+      <div class="stat-value">
+        {% if orders|length > 0 %}
+          R$ {{ '%.0f'|format((revenue|float) / (orders|length)) }}
+        {% else %}—{% endif %}
+      </div>
+      <div class="stat-label">Ticket médio</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+  <!-- Cadastros -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Novos Cadastros</h2>
+      <span class="badge badge-info">{{ users|length }} total</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Nome</th><th>Email</th><th>Cidade</th><th>Data</th></tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.full_name or '—' }}</td>
+            <td style="font-size:0.8rem; color:var(--text-muted);">{{ u.email }}</td>
+            <td style="font-size:0.8rem;">{{ u.city or '—' }}</td>
+            <td style="font-size:0.8rem; color:var(--text-muted);">{{ u.created_at.strftime('%d/%m/%y') }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:24px;">Nenhum cadastro no período</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pedidos -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Pedidos</h2>
+      <span class="badge badge-info">{{ orders|length }} total</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tutor</th><th>Serviço</th><th>Valor</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td>{{ o.tutor.full_name.split()[0] if o.tutor and o.tutor.full_name else '—' }}</td>
+            <td style="font-size:0.8rem;">{{ o.service_type|capitalize }}</td>
+            <td style="font-weight:600;">R$ {{ '%.2f'|format(o.amount|float) if o.amount else '0' }}</td>
+            <td>
+              <span class="badge badge-{% if o.status and o.status.name == 'CONFIRMED' %}success{% elif o.status and o.status.name == 'PENDING' %}warning{% elif o.status and o.status.name == 'CANCELLED' %}danger{% else %}info{% endif %}">
+                {{ o.status.value if o.status else '—' }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:24px;">Nenhum pedido no período</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

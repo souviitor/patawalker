@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% block title %}Taxas & Planos — PataWalker{% endblock %}
+{% block page_title %}Taxas & Planos de Serviço{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+
+  <!-- Plans -->
+  <div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-medal" style="color:var(--primary);"></i> Planos Semanais</h2>
+        <button class="btn btn-primary btn-sm" onclick="openModal('planModal')">
+          <i class="fa-solid fa-plus"></i> Novo plano
+        </button>
+      </div>
+      {% if plans %}
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        {% for p in plans %}
+        <div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; display:flex; align-items:center; gap:14px;">
+          <div style="width:44px;height:44px; background:linear-gradient(135deg,var(--primary),var(--primary-light)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; color:white; font-size:1.1rem; flex-shrink:0;">{{ p.plan_type.name }}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600; margin-bottom:2px;">{{ p.name }}</div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">{{ p.walks_per_week }}x/semana · {{ p.duration_minutes }} min</div>
+          </div>
+          <div style="font-family:var(--font-display); font-weight:800; color:var(--primary); font-size:1.1rem;">R$ {{ '%.2f'|format(p.price|float) }}</div>
+          <button class="btn btn-outline btn-sm" onclick="editPlan({{ p.id }}, '{{ p.plan_type.name }}', '{{ p.name }}', '{{ p.description or '' }}', {{ p.walks_per_week }}, {{ p.duration_minutes }}, {{ p.price }})">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align:center; padding:32px; color:var(--text-muted);">
+        <i class="fa-solid fa-medal" style="font-size:2rem; margin-bottom:12px; display:block; opacity:0.3;"></i>
+        Nenhum plano criado ainda.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Walk Durations -->
+  <div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-stopwatch" style="color:var(--primary);"></i> Passeios Avulsos</h2>
+        <button class="btn btn-primary btn-sm" onclick="openModal('durModal')">
+          <i class="fa-solid fa-plus"></i> Nova duração
+        </button>
+      </div>
+      {% if durations %}
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        {% for d in durations %}
+        <div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; display:flex; align-items:center; gap:14px;">
+          <div style="width:44px;height:44px; background:rgba(59,130,246,0.12); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--info); font-size:1rem; flex-shrink:0;">{{ d.duration_minutes }}'</div>
+          <div style="flex:1;">
+            <div style="font-weight:600; margin-bottom:2px;">{{ d.name }}</div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">{{ d.duration_minutes }} minutos de passeio</div>
+          </div>
+          <div style="font-family:var(--font-display); font-weight:800; color:var(--primary); font-size:1.1rem;">R$ {{ '%.2f'|format(d.price|float) }}</div>
+          <button class="btn btn-outline btn-sm" onclick="editDuration({{ d.id }}, '{{ d.name }}', {{ d.duration_minutes }}, {{ d.price }})">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align:center; padding:32px; color:var(--text-muted);">
+        <i class="fa-solid fa-stopwatch" style="font-size:2rem; margin-bottom:12px; display:block; opacity:0.3;"></i>
+        Nenhuma duração configurada.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Plan Modal -->
+<div class="overlay" id="planModal">
+  <div class="modal" style="max-width:500px; width:92%;">
+    <h2 style="font-family:var(--font-display); font-weight:700; margin-bottom:24px;">
+      <i class="fa-solid fa-medal" style="color:var(--primary);"></i> Configurar Plano
+    </h2>
+    <form method="POST" action="{{ url_for('admin.save_plan') }}">
+      <input type="hidden" name="plan_id" id="planId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de Plano *</label>
+          <select name="plan_type" id="planType" required>
+            <option value="P">Plano P (2x/semana)</option>
+            <option value="M">Plano M (3x/semana)</option>
+            <option value="G">Plano G (5x/semana)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nome do plano *</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-tag"></i>
+            <input type="text" name="name" id="planName" placeholder="Ex: Plano Iniciante" required>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea name="description" id="planDesc" placeholder="Descreva o plano..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Passeios/semana *</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-hashtag"></i>
+            <input type="number" name="walks_per_week" id="planWalks" min="1" max="7" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Duração (min) *</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-clock"></i>
+            <input type="number" name="duration_minutes" id="planDuration" min="15" max="120" required>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Preço mensal (R$) *</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-dollar-sign"></i>
+          <input type="number" name="price" id="planPrice" step="0.01" min="0" required placeholder="0.00">
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('planModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Salvar plano</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Duration Modal -->
+<div class="overlay" id="durModal">
+  <div class="modal" style="max-width:420px; width:92%;">
+    <h2 style="font-family:var(--font-display); font-weight:700; margin-bottom:24px;">
+      <i class="fa-solid fa-stopwatch" style="color:var(--primary);"></i> Configurar Duração
+    </h2>
+    <form method="POST" action="{{ url_for('admin.save_duration') }}">
+      <input type="hidden" name="duration_id" id="durId">
+      <div class="form-group">
+        <label>Nome *</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-tag"></i>
+          <input type="text" name="name" id="durName" placeholder="Ex: Passeio Padrão" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Duração (min) *</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-clock"></i>
+            <input type="number" name="duration_minutes" id="durMins" min="15" max="180" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Preço (R$) *</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-dollar-sign"></i>
+            <input type="number" name="price" id="durPrice" step="0.01" min="0" required placeholder="0.00">
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('durModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+function editPlan(id, type, name, desc, walks, duration, price) {
+  document.getElementById('planId').value = id;
+  document.getElementById('planType').value = type;
+  document.getElementById('planName').value = name;
+  document.getElementById('planDesc').value = desc;
+  document.getElementById('planWalks').value = walks;
+  document.getElementById('planDuration').value = duration;
+  document.getElementById('planPrice').value = price;
+  openModal('planModal');
+}
+
+function editDuration(id, name, mins, price) {
+  document.getElementById('durId').value = id;
+  document.getElementById('durName').value = name;
+  document.getElementById('durMins').value = mins;
+  document.getElementById('durPrice').value = price;
+  openModal('durModal');
+}
+
+// Pre-fill walks_per_week when plan type changes
+document.getElementById('planType').addEventListener('change', function() {
+  const map = { P: 2, M: 3, G: 5 };
+  document.getElementById('planWalks').value = map[this.value] || 2;
+});
+</script>
+{% endblock %}

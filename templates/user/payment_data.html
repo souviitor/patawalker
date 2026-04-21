@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Dados de Pagamento — PataWalker{% endblock %}
+{% block page_title %}Dados de Pagamento{% endblock %}
+
+{% block content %}
+<div style="max-width: 620px; margin: 0 auto;">
+  <!-- MP Integration Card -->
+  <div class="card" style="margin-bottom:20px; border-color:rgba(0,157,226,0.3); background:linear-gradient(135deg,rgba(0,157,226,0.04),rgba(0,102,255,0.02));">
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+      <div style="width:56px; height:56px; background:#009DE0; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <svg width="32" height="22" viewBox="0 0 32 22" fill="none"><path d="M16 0C7.163 0 0 4.925 0 11s7.163 11 16 11 16-4.925 16-11S24.837 0 16 0z" fill="#fff"/><path d="M8 11c0-4.418 3.582-8 8-8s8 3.582 8 8-3.582 8-8 8-8-3.582-8-8z" fill="#009DE0"/></svg>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display); font-weight:700; font-size:1.1rem;">Mercado Pago</div>
+        <div style="font-size:0.8rem; color:var(--text-muted);">Plataforma de pagamento segura e confiável</div>
+      </div>
+      <div style="margin-left:auto;">
+        <span class="badge badge-success"><i class="fa-solid fa-shield-halved"></i> Integrado</span>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+      {% for icon, label, desc in [
+        ('fa-credit-card','Cartão de Crédito','Parcelamento em até 12x'),
+        ('fa-mobile-screen','Pix','Aprovação em segundos'),
+        ('fa-credit-card','Cartão de Débito','Débito imediato'),
+        ('fa-barcode','Boleto Bancário','Prazo de até 3 dias')
+      ] %}
+      <div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; display:flex; gap:12px; align-items:flex-start;">
+        <i class="fa-solid {{ icon }}" style="color:#009DE0; margin-top:2px;"></i>
+        <div>
+          <div style="font-weight:600; font-size:0.875rem;">{{ label }}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">{{ desc }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2); border-radius:var(--radius-sm); padding:14px; font-size:0.875rem;">
+      <div style="font-weight:600; color:#16A34A; margin-bottom:6px;"><i class="fa-solid fa-shield-halved"></i> Política de Reembolso</div>
+      <div style="color:var(--text-muted); line-height:1.6;">
+        Cancelamentos realizados com <strong>mais de 24 horas de antecedência</strong> ao horário do passeio receberão reembolso integral automático via Mercado Pago. Cancelamentos tardios não geram reembolso.
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment history placeholder -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Histórico de Pagamentos</h2>
+    </div>
+    {% set paid_orders = current_user.services | selectattr('payment_status') | list %}
+    {% if paid_orders %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Data</th><th>Serviço</th><th>Valor</th><th>Método</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for o in paid_orders | sort(attribute='created_at', reverse=True) | list %}
+          <tr>
+            <td style="font-size:0.8rem; color:var(--text-muted);">{{ o.created_at.strftime('%d/%m/%Y') }}</td>
+            <td>{{ o.service_type|capitalize }}</td>
+            <td style="font-weight:600;">R$ {{ '%.2f'|format(o.amount|float) if o.amount else '—' }}</td>
+            <td style="font-size:0.8rem; color:var(--text-muted);">Mercado Pago</td>
+            <td>
+              <span class="badge badge-{% if o.payment_status and o.payment_status.name == 'APPROVED' %}success{% elif o.payment_status and o.payment_status.name == 'REFUNDED' %}warning{% elif o.payment_status and o.payment_status.name == 'REJECTED' %}danger{% else %}gray{% endif %}">
+                {{ o.payment_status.value if o.payment_status else '—' }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:36px; color:var(--text-muted);">
+      <i class="fa-solid fa-receipt" style="font-size:2.5rem; margin-bottom:14px; display:block; opacity:0.3;"></i>
+      Nenhum pagamento realizado ainda.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

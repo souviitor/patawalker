@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Confirmar Pedido — PataWalker{% endblock %}
+{% block page_title %}Confirmação do Pedido{% endblock %}
+
+{% block content %}
+<div style="max-width: 580px; margin: 0 auto;">
+  <div class="card" style="text-align: center; padding: 48px; margin-bottom: 20px; background: linear-gradient(135deg, rgba(34,197,94,0.06), rgba(34,197,94,0.02)); border-color: rgba(34,197,94,0.2);">
+    <div style="width: 80px; height: 80px; background: rgba(34,197,94,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2.5rem;">✅</div>
+    <h1 style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; margin-bottom: 10px;">Quase pronto!</h1>
+    <p style="color: var(--text-muted); max-width: 400px; margin: 0 auto;">Seu agendamento foi criado. Confirme os detalhes abaixo e finalize o pagamento para garantir seu passeio.</p>
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div style="font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin-bottom: 20px;">
+      📋 Detalhes do pedido #{{ order.id }}
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--bg); border-radius: var(--radius-sm);">
+        <div style="font-size: 1.5rem;">🐾</div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;">Pet</div>
+          <div style="font-weight: 600;">{{ order.pet.name if order.pet else '—' }}</div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--bg); border-radius: var(--radius-sm);">
+        <div style="font-size: 1.5rem;">🏅</div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;">Serviço</div>
+          <div style="font-weight: 600;">
+            {% if plan %}{{ plan.name }}{% elif duration %}Passeio Avulso — {{ duration.name }}{% else %}{{ order.service_type }}{% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if order.scheduled_date %}
+      <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--bg); border-radius: var(--radius-sm);">
+        <div style="font-size: 1.5rem;">📅</div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;">Data e Hora</div>
+          <div style="font-weight: 600;">
+            {{ order.scheduled_date.strftime('%d/%m/%Y') }}
+            {% if order.scheduled_time %} às {{ order.scheduled_time.strftime('%H:%M') }}{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if order.scheduled_days %}
+      <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--bg); border-radius: var(--radius-sm);">
+        <div style="font-size: 1.5rem;">🗓️</div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;">Dias e Horário</div>
+          <div style="font-weight: 600;">
+            {{ order.scheduled_days.days|join(', ') }} — {{ order.scheduled_days.time }}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: rgba(232,99,26,0.06); border-radius: var(--radius-sm); border: 1px solid rgba(232,99,26,0.2);">
+        <div style="font-size: 1.5rem;">💳</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;">Total a pagar</div>
+          <div style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--primary);">
+            R$ {{ '%.2f'|format(order.amount|float) }}
+            {% if plan %}<span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">/mês</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MercadoPago payment section -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div style="font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+      <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.5/mercadopago/logo__large@2x.png" alt="Mercado Pago" style="height: 24px;">
+      Pagamento Seguro
+    </div>
+    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 20px;">
+      Você será redirecionado para o ambiente seguro do Mercado Pago. Aceitamos cartão de crédito, débito, Pix e boleto bancário.
+    </p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+      {% for method in ['💳 Cartão de Crédito', '💳 Cartão de Débito', '📱 Pix', '📄 Boleto'] %}
+      <div style="padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 500; display: flex; align-items: center; gap: 8px;">{{ method }}</div>
+      {% endfor %}
+    </div>
+
+    <form method="POST" action="{{ url_for('services.pay_order', order_id=order.id) }}">
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%; justify-content:center;">
+        <i class="fa-solid fa-lock"></i> Pagar agora — R$ {{ '%.2f'|format(order.amount|float) }}
+      </button>
+    </form>
+
+    <div style="margin-top: 12px; text-align: center; font-size: 0.78rem; color: var(--text-muted);">
+      <i class="fa-solid fa-shield-halved"></i> Cancele até 24h antes e receba reembolso total
+    </div>
+  </div>
+
+  <a href="{{ url_for('user.contracted_services') }}" class="btn btn-outline" style="width:100%; justify-content:center;">
+    Cancelar e voltar
+  </a>
+</div>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% block title %}Passeio Avulso — PataWalker{% endblock %}
+{% block page_title %}Passeio Avulso{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('services.book_avulso') }}">
+<div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start;">
+  <div>
+    <!-- Pet selection -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div style="font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <i class="fa-solid fa-paw" style="color:var(--primary);"></i> Qual pet vai passear?
+      </div>
+      {% if pets %}
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap:12px;">
+        {% for pet in pets %}
+        <label style="cursor:pointer;">
+          <input type="radio" name="pet_id" value="{{ pet.id }}" style="display:none;" onchange="selectCard('pet', this, '{{ pet.id }}')">
+          <div class="sel-card" id="pet-{{ pet.id }}" style="border:2px solid var(--border); border-radius:var(--radius-sm); padding:16px; text-align:center; transition:all 0.2s; cursor:pointer;">
+            <div style="font-size:2.5rem; margin-bottom:8px;">🐶</div>
+            <div style="font-weight:600; font-size:0.9rem;">{{ pet.name }}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">{{ pet.breed or 'SRD' }}</div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="color:var(--text-muted);">Cadastre um pet primeiro. <a href="{{ url_for('user.complete_profile') }}" style="color:var(--primary);">Adicionar pet</a></p>
+      {% endif %}
+    </div>
+
+    <!-- Duration -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div style="font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <i class="fa-solid fa-stopwatch" style="color:var(--primary);"></i> Duração do passeio
+      </div>
+      {% if durations %}
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap:14px;">
+        {% for dur in durations %}
+        <label style="cursor:pointer;">
+          <input type="radio" name="duration_id" value="{{ dur.id }}" style="display:none;" onchange="selectCard('dur', this, '{{ dur.id }}'); updatePrice({{ dur.price }})">
+          <div class="sel-card" id="dur-{{ dur.id }}" style="border:2px solid var(--border); border-radius:var(--radius-sm); padding:20px; text-align:center; transition:all 0.2s; cursor:pointer;">
+            <div style="font-size:1.5rem; font-weight:800; font-family:var(--font-display); color:var(--primary);">{{ dur.duration_minutes }}<span style="font-size:0.9rem; font-weight:400;">min</span></div>
+            <div style="font-weight:600; font-size:0.875rem; margin: 6px 0;">{{ dur.name }}</div>
+            <div style="color:var(--primary); font-weight:700;">R$ {{ '%.2f'|format(dur.price|float) }}</div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="color:var(--text-muted);">Durações não configuradas ainda.</p>
+      {% endif %}
+    </div>
+
+    <!-- Calendar -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div style="font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <i class="fa-solid fa-calendar" style="color:var(--primary);"></i> Escolha a data
+      </div>
+      <input type="hidden" name="walk_date" id="walkDate">
+      <div id="calendar"></div>
+    </div>
+
+    <!-- Time -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div style="font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <i class="fa-solid fa-clock" style="color:var(--primary);"></i> Horário desejado
+      </div>
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap:10px;">
+        {% for h in ['07:00','08:00','09:00','10:00','14:00','15:00','16:00','17:00','18:00'] %}
+        <label style="cursor:pointer;">
+          <input type="radio" name="walk_time" value="{{ h }}" style="display:none;" onchange="selectCard('time', this, '{{ h }}')">
+          <div class="sel-card" id="time-{{ h }}" style="border:2px solid var(--border); border-radius:var(--radius-sm); padding:12px; text-align:center; font-weight:600; font-size:0.9rem; transition:all 0.2s; cursor:pointer;">{{ h }}</div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg" style="width:100%; justify-content:center;" id="submitBtn" disabled>
+      <i class="fa-solid fa-calendar-check"></i> Confirmar Agendamento
+    </button>
+  </div>
+
+  <!-- Summary -->
+  <div style="position:sticky; top: calc(var(--header-h) + 20px);">
+    <div class="card">
+      <div style="font-family:var(--font-display); font-weight:700; margin-bottom:16px;">Resumo do passeio</div>
+      <div style="display:flex; flex-direction:column; gap:10px; font-size:0.875rem;">
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Pet</span>
+          <span id="sumPet" style="font-weight:600;">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Duração</span>
+          <span id="sumDur" style="font-weight:600;">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Data</span>
+          <span id="sumDate" style="font-weight:600;">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Horário</span>
+          <span id="sumTime" style="font-weight:600;">—</span>
+        </div>
+        <div style="border-top:1px solid var(--border); padding-top:10px; display:flex; justify-content:space-between;">
+          <span style="font-weight:700;">Total</span>
+          <span id="sumPrice" style="font-family:var(--font-display); font-size:1.3rem; font-weight:800; color:var(--primary);">—</span>
+        </div>
+      </div>
+      <div style="margin-top:14px; padding:12px; background:rgba(34,197,94,0.08); border-radius:var(--radius-sm); font-size:0.78rem; color:#16A34A;">
+        <i class="fa-solid fa-shield-halved"></i> Cancele até 24h antes e receba o reembolso.
+      </div>
+    </div>
+  </div>
+</div>
+</form>
+
+<script>
+const availableDates = {{ available_dates | tojson }};
+let state = { pet: null, dur: null, date: null, time: null, price: 0 };
+
+function selectCard(type, input, id) {
+  const prefix = type + '-';
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(el => {
+    el.style.borderColor = 'var(--border)';
+    el.style.background = 'transparent';
+    if (type === 'time') el.style.color = 'var(--text)';
+  });
+  const el = document.getElementById(prefix + id);
+  if (el) {
+    el.style.borderColor = 'var(--primary)';
+    if (type === 'time') {
+      el.style.background = 'var(--primary)';
+      el.style.color = 'white';
+    } else {
+      el.style.background = 'rgba(232,99,26,0.08)';
+    }
+  }
+  if (type === 'pet') {
+    state.pet = el ? el.querySelector('div:nth-child(2)')?.textContent : id;
+    document.getElementById('sumPet').textContent = state.pet || id;
+  }
+  if (type === 'dur') {
+    state.dur = el ? el.querySelector('div:nth-child(2)')?.textContent : id;
+    document.getElementById('sumDur').textContent = state.dur || id;
+  }
+  if (type === 'time') {
+    state.time = id;
+    document.getElementById('sumTime').textContent = id;
+  }
+  validateForm();
+}
+
+function updatePrice(p) {
+  state.price = p;
+  document.getElementById('sumPrice').textContent = 'R$ ' + p.toFixed(2).replace('.', ',');
+}
+
+// Calendar
+function buildCalendar() {
+  const cal = document.getElementById('calendar');
+  const now = new Date();
+  const months = {};
+  
+  availableDates.forEach(ds => {
+    const d = new Date(ds + 'T12:00:00');
+    const key = d.getFullYear() + '-' + (d.getMonth() + 1);
+    if (!months[key]) months[key] = { year: d.getFullYear(), month: d.getMonth(), dates: [] };
+    months[key].dates.push(ds);
+  });
+
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const firstKey = Object.keys(months)[0];
+  const { year, month, dates } = months[firstKey];
+  
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  let html = `<div class="calendar"><div class="cal-header"><h3>${monthNames[month]} ${year}</h3></div>
+  <div class="cal-grid">
+    <div class="cal-day-name">Dom</div><div class="cal-day-name">Seg</div><div class="cal-day-name">Ter</div>
+    <div class="cal-day-name">Qua</div><div class="cal-day-name">Qui</div><div class="cal-day-name">Sex</div><div class="cal-day-name">Sáb</div>`;
+  
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    const pad = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const avail = dates.includes(pad);
+    const past = new Date(pad + 'T12:00:00') <= now;
+    if (avail && !past) {
+      html += `<div class="cal-day available" onclick="selectDate('${pad}', this)">${d}</div>`;
+    } else {
+      html += `<div class="cal-day disabled">${d}</div>`;
+    }
+  }
+  html += '</div></div>';
+  cal.innerHTML = html;
+}
+
+function selectDate(ds, el) {
+  document.querySelectorAll('.cal-day.selected').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('walkDate').value = ds;
+  const d = new Date(ds + 'T12:00:00');
+  const opts = { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' };
+  document.getElementById('sumDate').textContent = d.toLocaleDateString('pt-BR', opts);
+  state.date = ds;
+  validateForm();
+}
+
+function validateForm() {
+  const petOk = document.querySelector('input[name="pet_id"]:checked');
+  const durOk = document.querySelector('input[name="duration_id"]:checked');
+  const timeOk = document.querySelector('input[name="walk_time"]:checked');
+  const dateOk = document.getElementById('walkDate').value;
+  document.getElementById('submitBtn').disabled = !(petOk && durOk && timeOk && dateOk);
+}
+
+buildCalendar();
+</script>
+{% endblock %}

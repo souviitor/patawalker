@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Planos de Passeio — PataWalker{% endblock %}
+{% block page_title %}Planos de Passeio{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 28px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; border: none;">
+  <div style="max-width: 560px;">
+    <h1 style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; margin-bottom: 10px;">
+      🦮 Planos de Passeio Semanais
+    </h1>
+    <p style="opacity: 0.88; line-height: 1.7;">
+      Nossos planos oferecem passeios regulares com <strong>horário fixo e exclusivo</strong> para o seu pet.
+      Cada passeio tem duração mínima de 30 minutos em local seguro, acompanhado por nosso walker certificado.
+      Você escolhe os dias e o horário — a consistência faz bem para os cães!
+    </p>
+  </div>
+</div>
+
+{% if plans %}
+<div class="plans-grid">
+  {% for plan in plans %}
+  <div class="plan-card {% if plan.plan_type.name == 'M' %}featured{% endif %}">
+    {% if plan.plan_type.name == 'M' %}
+    <div style="background: var(--accent); color: #1A1A2E; font-size: 0.72rem; font-weight: 700; padding: 4px 14px; border-radius: 20px; display: inline-block; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.08em;">⭐ Mais popular</div>
+    {% endif %}
+    <div class="plan-size">{{ plan.plan_type.name }}</div>
+    <div class="plan-name">{{ plan.name }}</div>
+    <div class="plan-desc">
+      <strong>{{ plan.walks_per_week }}x</strong> passeios por semana • <strong>{{ plan.duration_minutes }} min</strong> cada
+    </div>
+    <div style="margin: 16px 0; padding: 12px; background: rgba(232,99,26,0.06); border-radius: var(--radius-sm);">
+      {% if plan.plan_type.name == 'P' %}
+        <div style="font-size: 0.8rem; color: var(--text-muted);">✅ 2 dias/semana à sua escolha<br>✅ Horário fixo e exclusivo<br>✅ Relatório pós-passeio</div>
+      {% elif plan.plan_type.name == 'M' %}
+        <div style="font-size: 0.8rem; color: var(--text-muted);">✅ 3 dias/semana à sua escolha<br>✅ Horário fixo e exclusivo<br>✅ Fotos durante o passeio<br>✅ Relatório pós-passeio</div>
+      {% else %}
+        <div style="font-size: 0.8rem; color: var(--text-muted);">✅ 5 dias/semana à sua escolha<br>✅ Horário fixo e exclusivo<br>✅ Fotos + vídeos do passeio<br>✅ Relatório detalhado<br>✅ Prioridade no atendimento</div>
+      {% endif %}
+    </div>
+    <div class="plan-price">R$ {{ '%.2f'|format(plan.price|float) }}<span>/mês</span></div>
+    <div style="margin-top: 20px;">
+      <a href="{{ url_for('services.plan_detail', plan_id=plan.id) }}" class="btn btn-primary" style="width:100%; justify-content:center;">
+        Contratar Plano {{ plan.plan_type.name }}
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center; padding: 48px;">
+  <div style="font-size: 3rem; margin-bottom: 16px;">📋</div>
+  <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Planos em breve</div>
+  <div style="color: var(--text-muted);">O administrador ainda não configurou os planos disponíveis.</div>
+</div>
+{% endif %}
+{% endblock %}

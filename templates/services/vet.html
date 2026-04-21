@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Acompanhar ao Vet — PataWalker{% endblock %}
+{% block page_title %}Acompanhamento ao Veterinário{% endblock %}
+{% block content %}
+<div style="max-width:600px; margin:0 auto;">
+  <div class="card" style="text-align:center; padding:40px; background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(59,130,246,0.02)); border-color:rgba(59,130,246,0.2); margin-bottom:24px;">
+    <div style="font-size:4rem; margin-bottom:16px;">🏥</div>
+    <h1 style="font-family:var(--font-display); font-size:1.6rem; font-weight:800; margin-bottom:10px;">Acompanhamento ao Veterinário</h1>
+    <p style="color:var(--text-muted); line-height:1.7; max-width:420px; margin:0 auto;">
+      Não pode levar seu pet ao veterinário? Nós levamos! Nosso walker busca seu pet, acompanha a consulta e traz de volta com segurança.
+    </p>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div style="font-family:var(--font-display); font-weight:700; margin-bottom:16px;"><i class="fa-solid fa-circle-info" style="color:var(--info);"></i> O que está incluído</div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      {% for item in ['Busca e retorno do seu pet em casa','Acompanhamento durante toda a consulta','Relatório detalhado após a visita','Comunicação em tempo real via WhatsApp','Suporte para consultas, exames e vacinas'] %}
+      <div style="display:flex; align-items:center; gap:10px; font-size:0.875rem;">
+        <i class="fa-solid fa-check-circle" style="color:var(--success); flex-shrink:0;"></i> {{ item }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-family:var(--font-display); font-weight:700; margin-bottom:20px;">Solicitar serviço</div>
+    <form method="POST">
+      {% if pets %}
+      <div class="form-group">
+        <label>Selecione o pet</label>
+        <select name="pet_id" required>
+          <option value="">Escolha o pet...</option>
+          {% for pet in pets %}<option value="{{ pet.id }}">{{ pet.name }} ({{ pet.breed or 'SRD' }})</option>{% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="form-group">
+        <label>Clínica / Veterinário</label>
+        <div class="input-wrap"><i class="fa-solid fa-location-dot"></i>
+        <input type="text" name="vet_location" placeholder="Nome e endereço da clínica" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Data da consulta</label>
+          <div class="input-wrap"><i class="fa-solid fa-calendar"></i>
+          <input type="date" name="vet_date" required></div>
+        </div>
+        <div class="form-group">
+          <label>Horário</label>
+          <div class="input-wrap"><i class="fa-solid fa-clock"></i>
+          <input type="time" name="vet_time" required></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea name="notes" placeholder="Tipo de consulta, medicamentos em uso, comportamento do pet..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%; justify-content:center;">
+        <i class="fa-solid fa-calendar-check"></i> Solicitar Acompanhamento
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
