@@ -26,7 +26,10 @@ def create_app(config_class=Config):
 
     return app
 
-app = create_app()  # ← expõe o objeto para o gunicorn
+# Expõe o objeto app no nível do módulo para o gunicorn conseguir importar
+app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    with app.app_context():
+        db.create_all()
+    app.run(debug=False, host='0.0.0.0', port=5001)
