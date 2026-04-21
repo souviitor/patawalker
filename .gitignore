@@ -1,0 +1,4 @@
+# Ignorar dependências
+node_modules/
+venv/
+.env/
